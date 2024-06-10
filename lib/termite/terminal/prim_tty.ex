@@ -27,11 +27,13 @@ defmodule Termite.Terminal.PrimTTY do
     term
   end
 
-  def loop(term) do
+  def loop(term, timeout) do
     {_pid, ref} = reader(term)
 
     receive do
       {^ref, message} -> message
+    after
+      timeout -> :timeout
     end
   end
 end

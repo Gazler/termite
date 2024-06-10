@@ -1,5 +1,4 @@
 defmodule Termite.Terminal do
-
   defstruct [:adapter, :size]
 
   def start(opts \\ []) do
@@ -20,8 +19,8 @@ defmodule Termite.Terminal do
     %{state | size: %{width: cols, height: rows}}
   end
 
-  def loop(state) do
+  def loop(state, timeout \\ :infinity) do
     %{adapter: {adapter, term}} = state
-    adapter.loop(term)
+    adapter.loop(term, timeout)
   end
 end
