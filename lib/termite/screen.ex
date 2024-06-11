@@ -17,8 +17,12 @@ defmodule Termite.Screen do
 
   defp seq(:reset, []), do: "r"
 
+  def escape_code() do
+    "\x1b["
+  end
+
   def escape_sequence(command, args \\ []) do
-    "\x1b[" <> seq(command, args)
+    escape_code() <> seq(command, args)
   end
 
   def run_escape_sequence(term, command, args \\ []) do
