@@ -23,7 +23,11 @@ defmodule Snake do
     x = :rand.uniform(state.size.width - 2) + 1
     y = :rand.uniform(state.size.height - 2) + 1
 
-    %{state | food: {x, y}}
+    if {x, y} in state.path do
+      generate_food(state)
+    else
+      %{state | food: {x, y}}
+    end
   end
 
   defp redraw_and_loop(state) do
@@ -31,14 +35,16 @@ defmodule Snake do
   end
 
   def loop(%{term: term} = state) do
+    state = draw_snake(state)
+
     case Termite.Terminal.loop(term, 100) do
       {:signal, :winch} -> redraw_and_loop(Termite.Terminal.resize(term))
-      {:data, "\e[A"} -> change_direction(state, :up) |> redraw_and_loop()
-      {:data, "\e[B"} -> change_direction(state, :down) |> redraw_and_loop()
-      {:data, "\e[C"} -> change_direction(state, :right) |> redraw_and_loop()
-      {:data, "\e[D"} -> change_direction(state, :left) |> redraw_and_loop()
+      {:data, "\e[A"} -> change_direction(state, :up) |> loop()
+      {:data, "\e[B"} -> change_direction(state, :down) |> loop()
+      {:data, "\e[C"} -> change_direction(state, :right) |> loop()
+      {:data, "\e[D"} -> change_direction(state, :left) |> loop()
       {:data, "q"} -> cleanup_and_exit(term)
-      :timeout -> redraw_and_loop(state)
+      :timeout -> loop(state)
       _ -> loop(state)
     end
   end
@@ -60,38 +66,52 @@ defmodule Snake do
   defp game_panel(term, state) do
     term =
       term
-      |> Screen.write("┌" <> String.duplicate("─", state.size.width - 2) <> "┐")
+      |> Screen.write("┌" <> String.duplicate("─", state.size.width * 2 - 2) <> "┐")
       |> Screen.run_escape_sequence(:cursor_next_line, [1])
 
     term =
       Enum.reduce(1..(state.size.height - 2), term, fn _, term ->
         term
-        |> Screen.write("│" <> String.duplicate(" ", state.size.width - 2) <> "│")
+        |> Screen.write("│" <> String.duplicate(" ", state.size.width * 2 - 2) <> "│")
         |> Screen.run_escape_sequence(:cursor_next_line, [1])
       end)
 
     term
-    |> Screen.write("└" <> String.duplicate("─", state.size.width - 2))
+    |> Screen.write("└" <> String.duplicate("─", state.size.width * 2 - 2))
     |> Screen.write("┘")
   end
 
   def redraw(state) do
-    {food_x, food_y} = state.food
-
     term =
       state.term
       |> Screen.run_escape_sequence(:cursor_move, [0, 0])
       |> Screen.run_escape_sequence(:screen_clear)
       |> game_panel(state)
-      |> Screen.run_escape_sequence(:cursor_move, [food_x, food_y])
+
+    %{state | term: term}
+    |> draw_snake()
+  end
+
+  defp draw_food(state) do
+    {food_x, food_y} = state.food
+
+    term =
+      state.term
+      |> Screen.run_escape_sequence(:cursor_move, [food_x * 2, food_y])
       |> Screen.write("*")
 
-    draw_snake(%{state | term: term})
+    %{state | term: term}
   end
 
   defp draw_snake(state) do
-    %{path: path, direction: direction} = state
+    %{term: term, path: path, direction: direction} = state
     {cur_x, cur_y} = Enum.reverse(path) |> hd()
+    {tail_x, tail_y} = hd(path)
+
+    term =
+      term
+      |> Screen.run_escape_sequence(:cursor_move, [tail_x * 2, tail_y])
+      |> Screen.write("  ")
 
     {new_x, new_y} =
       new_point =
@@ -103,25 +123,29 @@ defmodule Snake do
       end
 
     wall_collision? =
-      new_x == 1 || new_x == state.size.width || new_y == 1 || new_y == state.size.height
+      new_x == 0 || new_x == state.size.width || new_y == 1 || new_y == state.size.height
 
     tail_collision? = new_point in state.path
 
     state =
       cond do
         new_point == state.food -> generate_food(%{state | path: path ++ [new_point]})
-        wall_collision? || tail_collision? -> cleanup_and_exit(state.term)
+        wall_collision? || tail_collision? -> cleanup_and_exit(term)
         true -> %{state | path: tl(path) ++ [new_point]}
       end
 
+    term = Screen.write(term, IO.ANSI.inverse())
+
     term =
-      Enum.reduce(state.path, state.term, fn {x, y}, term ->
+      Enum.reduce(state.path, term, fn {x, y}, term ->
         term
-        |> Screen.run_escape_sequence(:cursor_move, [x, y])
-        |> Screen.write("#")
+        |> Screen.run_escape_sequence(:cursor_move, [x * 2, y])
+        |> Screen.write("  ")
       end)
 
-    %{state | term: term}
+    term = Screen.write(term, IO.ANSI.reset())
+
+    draw_food(%{state | term: term})
   end
 
   defp cleanup_and_exit(state) do
