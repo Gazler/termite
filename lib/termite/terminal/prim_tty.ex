@@ -5,7 +5,7 @@ defmodule Termite.Terminal.PrimTTY do
 
   defp from_record(term), do: state(term)
 
-  defp reader(term) do
+  def reader(term) do
     from_record(term)[:reader]
   end
 

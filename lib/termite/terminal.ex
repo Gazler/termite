@@ -7,6 +7,12 @@ defmodule Termite.Terminal do
     resize(%__MODULE__{adapter: {adapter, term}})
   end
 
+  def reader(state) do
+    %{adapter: {adapter, term}} = state
+    {_, ref} = adapter.reader(term)
+    ref
+  end
+
   def write(state, str) do
     %{adapter: {adapter, term}} = state
     term = adapter.write(term, str)
