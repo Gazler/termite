@@ -4,6 +4,8 @@ defmodule Termite.MixProject do
   def project do
     [
       app: :termite,
+      description: "Helpers for handling terminal inout and output",
+      package: package(),
       version: "0.1.0",
       elixir: "~> 1.17-rc",
       start_permanent: Mix.env() == :prod,
@@ -15,6 +17,14 @@ defmodule Termite.MixProject do
   def application do
     [
       extra_applications: [:logger]
+    ]
+  end
+
+  defp package() do
+    [
+      files: ~w(lib .formatter.exs mix.exs README.md LICENCE.md),
+      licenses: ["MIT"],
+      links: %{}
     ]
   end
 
