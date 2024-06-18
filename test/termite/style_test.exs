@@ -21,6 +21,12 @@ defmodule Termite.StyleTest do
 
       assert string == "\e[1;3;5mhello world\e[0m"
     end
+
+    test "no escape codes if there are no styles" do
+      string = Termite.Style.render_to_string("hello world")
+
+      assert string == "hello world"
+    end
   end
 
   describe "colors" do

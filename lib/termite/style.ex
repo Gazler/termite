@@ -75,7 +75,13 @@ defmodule Termite.Style do
     %{style | styles: styles ++ [:crossed_out]}
   end
 
-  def render_to_string(style \\ %Style{}, str) do
+  def render_to_string(style \\ %Style{}, str)
+
+  def render_to_string(%Style{styles: []}, str) do
+    str
+  end
+
+  def render_to_string(style = %Style{}, str) do
     seq =
       Enum.map(style.styles, &seq(&1, style))
       |> Enum.join(";")
