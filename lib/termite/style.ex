@@ -75,6 +75,10 @@ defmodule Termite.Style do
     %{style | styles: styles ++ [:crossed_out]}
   end
 
+  def reset_code() do
+    Termite.Screen.escape_code() <> seq(:reset, %Style{}) <> "m"
+  end
+
   def render_to_string(style \\ %Style{}, str)
 
   def render_to_string(%Style{styles: []}, str) do
@@ -83,10 +87,12 @@ defmodule Termite.Style do
 
   def render_to_string(style = %Style{}, str) do
     seq =
-      Enum.map(style.styles, &seq(&1, style))
+      style.styles
+      |> Enum.sort()
+      |> Enum.map(&seq(&1, style))
       |> Enum.join(";")
 
     Termite.Screen.escape_code() <>
-      seq <> "m" <> str <> Termite.Screen.escape_code() <> seq(:reset, style) <> "m"
+      seq <> "m" <> str <> reset_code()
   end
 end

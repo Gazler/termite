@@ -19,7 +19,7 @@ defmodule Termite.StyleTest do
         |> Termite.Style.blink()
         |> Termite.Style.render_to_string("hello world")
 
-      assert string == "\e[1;3;5mhello world\e[0m"
+      assert string == "\e[5;1;3mhello world\e[0m"
     end
 
     test "no escape codes if there are no styles" do
@@ -36,7 +36,7 @@ defmodule Termite.StyleTest do
         |> Termite.Style.background(3)
         |> Termite.Style.render_to_string("hello world")
 
-      assert string == "\e[35;43mhello world\e[0m"
+      assert string == "\e[43;35mhello world\e[0m"
     end
 
     test "bright ansi colors are supported" do
@@ -45,7 +45,7 @@ defmodule Termite.StyleTest do
         |> Termite.Style.background(13)
         |> Termite.Style.render_to_string("hello world")
 
-      assert string == "\e[93;105mhello world\e[0m"
+      assert string == "\e[105;93mhello world\e[0m"
     end
 
     test "extended ansi colors are supported if specified" do
@@ -55,7 +55,7 @@ defmodule Termite.StyleTest do
         |> Termite.Style.background(33)
         |> Termite.Style.render_to_string("hello world")
 
-      assert string == "\e[38;5;50;48;5;33mhello world\e[0m"
+      assert string == "\e[48;5;33;38;5;50mhello world\e[0m"
     end
 
     test "extended ansi colors raise by default" do
