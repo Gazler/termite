@@ -39,10 +39,7 @@ defmodule Demo do
         Screen.write(state, "│" <> String.duplicate(" ", state.size.width - 2) <> "│")
       end)
 
-    state = Screen.write(state, "└" <> String.duplicate("─", state.size.width - 2))
-
-    # We write this in a separate command to prevent scrolling
-    state = Screen.write(state, "┘")
+    state = Screen.write(state, "└" <> String.duplicate("─", state.size.width - 2) <> "┘")
 
     # We have to move down and then up again to correctly reset the cursor
     state

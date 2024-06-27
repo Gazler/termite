@@ -22,6 +22,7 @@ defmodule Termite.Terminal.PrimTTY do
   end
 
   def write(term, str) do
+    term = state(term, xn: false)
     {output, term} = :prim_tty.handle_request(term, {:putc, str})
     :prim_tty.write(term, output)
     term
