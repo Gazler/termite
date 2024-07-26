@@ -9,13 +9,17 @@ defmodule Termite.Terminal.PrimTTY do
     from_record(term)[:reader]
   end
 
-  def start() do
+  def writer(term) do
+    from_record(term)[:writer]
+  end
+
+  def start(opts \\ %{}) do
     :erlang.unregister(:user_drv_writer)
     :erlang.unregister(:user_drv_reader)
 
     old_level = Logger.level()
     Logger.configure(level: :emergency)
-    term = :prim_tty.init(%{})
+    term = :prim_tty.init(opts)
     :timer.sleep(100)
     Logger.configure(level: old_level)
     term
@@ -24,7 +28,13 @@ defmodule Termite.Terminal.PrimTTY do
   def write(term, str) do
     term = state(term, xn: false)
     {output, term} = :prim_tty.handle_request(term, {:putc, str})
-    :prim_tty.write(term, output)
+    {_pid, ref} = writer(term)
+    :prim_tty.write(term, output, self())
+
+    receive do
+      {^ref, :ok} -> nil
+    end
+
     term
   end
 

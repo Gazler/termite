@@ -3,7 +3,7 @@ defmodule Termite.Terminal do
 
   def start(opts \\ []) do
     adapter = Keyword.get(opts, :adapter, Termite.Terminal.PrimTTY)
-    term = adapter.start()
+    term = adapter.start(Map.new(opts))
     resize(%__MODULE__{adapter: {adapter, term}})
   end
 
