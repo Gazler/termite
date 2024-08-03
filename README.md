@@ -57,8 +57,10 @@ More examples are available in the examples directory.
 
 ## Documentation
 
+https://hexdocs.pm/termite
+
 Documentation can be generated with ExDoc using:
 
 ```sh
-ex_doc Termite 0.2.0 _build/dev/lib/termite/ebin/
+mix docs
 ```

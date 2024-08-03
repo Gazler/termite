@@ -1,15 +1,22 @@
 defmodule Termite.MixProject do
   use Mix.Project
 
+  @version "0.2.0"
+
   def project do
     [
       app: :termite,
       description: "A dependency-free NIF-free terminal library for Elixir.",
       package: package(),
-      version: "0.2.0",
+      version: @version,
       elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      name: "Termite",
+      source_url: "https://github.com/Gazler/termite",
+      docs: [
+        source_ref: "v#{@version}"
+      ]
     ]
   end
 
