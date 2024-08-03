@@ -1,4 +1,18 @@
 defmodule Termite.Style do
+  @moduledoc """
+  This module contains functions for building up a styled input.
+
+  The functions in this module are intended to be chained. For example:
+
+  ```elixir
+  iex> Termite.Style.background(5)
+  ...> |> Termite.Style.foreground(3)
+  ...> |> Termite.Style.bold()
+  ...> |> Termite.Style.render_to_string("Hello World")
+  "\e[1;45;33mHello World\e[0m"
+  ```
+  """
+
   alias __MODULE__
 
   defstruct styles: [], type: :ansi
@@ -27,58 +41,113 @@ defmodule Termite.Style do
     "38;5;#{color}"
   end
 
+  @doc """
+  Change the style type to ansi. This is the default value.
+  """
   def ansi(style \\ %Style{}) do
     %{style | type: :ansi}
   end
 
+  @doc """
+  Change the style type to ansi256 for extended colors.
+  """
   def ansi256(style \\ %Style{}) do
     %{style | type: :ansi256}
   end
 
+  @doc """
+  Set the background color. This can be a value up to 16 for `:ansi`
+  or up to 255 for `:ansi256`.
+  """
   def background(%{styles: styles} = style \\ %Style{}, color) do
     %{style | styles: styles ++ [{:background, color}]}
   end
 
+  @doc """
+  Set the foreground (text) color. This can be a value up to 16 for `:ansi`
+  or up to 255 for `:ansi256`.
+  """
   def foreground(%{styles: styles} = style \\ %Style{}, color) do
     %{style | styles: styles ++ [{:foreground, color}]}
   end
 
+  @doc """
+  Set the text style to bold.
+  """
   def bold(%{styles: styles} = style \\ %Style{}) do
     %{style | styles: styles ++ [:bold]}
   end
 
+  @doc """
+  Set the text style to dim/faint.
+  """
   def faint(%{styles: styles} = style \\ %Style{}) do
     %{style | styles: styles ++ [:faint]}
   end
 
+  @doc """
+  Set the text style to underline.
+  """
   def underline(%{styles: styles} = style \\ %Style{}) do
     %{style | styles: styles ++ [:underline]}
   end
 
+  @doc """
+  Set the text style to blink.
+  """
   def blink(%{styles: styles} = style \\ %Style{}) do
     %{style | styles: styles ++ [:blink]}
   end
 
+  @doc """
+  Set the text style to italic.
+  """
   def italic(%{styles: styles} = style \\ %Style{}) do
     %{style | styles: styles ++ [:italic]}
   end
 
+  @doc """
+  Set the text style to inverse (swap foreground/background colors).
+  """
   def inverse(%{styles: styles} = style \\ %Style{}) do
     %{style | styles: styles ++ [:inverse]}
   end
 
+  @doc """
+  Set the text style to inverse (swap foreground/background colors).
+  """
   def reverse(%{styles: styles} = style \\ %Style{}) do
     %{style | styles: styles ++ [:inverse]}
   end
 
+  @doc """
+  Set the text style to strikethrough.
+  """
   def crossed_out(%{styles: styles} = style \\ %Style{}) do
     %{style | styles: styles ++ [:crossed_out]}
   end
 
+  @doc """
+  Output the reset code.
+
+  ```elixir
+  iex> Termite.Style.reset_code()
+  "\e[0m"
+  ```
+  """
   def reset_code() do
     Termite.Screen.escape_code() <> seq(:reset, %Style{}) <> "m"
   end
 
+  @doc """
+  Render a string with the specified styles. And a reset code.
+
+  ```elixir
+  iex> Termite.Style.bold()
+  ...> |> Termite.Style.render_to_string("Hello")
+  "\e[1mHello\e[0m"
+  ```
+  """
   def render_to_string(style \\ %Style{}, str)
 
   def render_to_string(%Style{styles: []}, str) do

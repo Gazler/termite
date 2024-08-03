@@ -1,5 +1,6 @@
 defmodule Termite.StyleTest do
   use ExUnit.Case, async: true
+  doctest Termite.Style
 
   describe "sequences" do
     test "sequences are combined" do

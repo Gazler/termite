@@ -12,7 +12,7 @@ defmodule Demo do
   end
 
   def loop(state) do
-    case Termite.Terminal.loop(state) do
+    case Termite.Terminal.poll(state) do
       {:signal, :winch} -> redraw_and_loop(Termite.Terminal.resize(state))
       {:data, "\e[A"} -> state |> Screen.run_escape_sequence(:cursor_up, [1]) |> loop()
       {:data, "\e[B"} -> state |> Screen.run_escape_sequence(:cursor_down, [1]) |> loop()
@@ -64,11 +64,6 @@ defmodule Demo do
     :timer.sleep(10)
     System.halt()
   end
-end
-
-if :erlang.system_info(:break_ignored) != true do
-  IO.puts(~s|Run with elixir --erl +"Bi" -S mix run examples/demo.exs|)
-  System.halt()
 end
 
 Demo.start()

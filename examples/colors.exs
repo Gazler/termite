@@ -78,9 +78,4 @@ defmodule Colors do
   end
 end
 
-if :erlang.system_info(:break_ignored) != true do
-  IO.puts(~s|Run with elixir --erl +"Bi" -S mix run examples/colors.exs|)
-  System.halt()
-end
-
 Colors.start()

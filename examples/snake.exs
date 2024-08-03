@@ -37,7 +37,7 @@ defmodule Snake do
   def loop(%{term: term} = state) do
     state = draw_snake(state)
 
-    case Termite.Terminal.loop(term, 100) do
+    case Termite.Terminal.poll(term, 100) do
       {:signal, :winch} -> redraw_and_loop(Termite.Terminal.resize(term))
       {:data, "\e[A"} -> change_direction(state, :up) |> loop()
       {:data, "\e[B"} -> change_direction(state, :down) |> loop()
@@ -153,11 +153,6 @@ defmodule Snake do
     :timer.sleep(10)
     System.halt()
   end
-end
-
-if :erlang.system_info(:break_ignored) != true do
-  IO.puts(~s|Run with elixir --erl +"Bi" -S mix run examples/snake.exs|)
-  System.halt()
 end
 
 Snake.start()

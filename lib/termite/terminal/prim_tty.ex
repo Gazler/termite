@@ -1,19 +1,33 @@
 defmodule Termite.Terminal.PrimTTY do
+  @moduledoc """
+  A termite adapter for prim_tty provided by OTP.
+
+  This adapter is the default used by Termite.
+  """
+
+  @behaviour Termite.Terminal.Adapter
+
   require Logger
   require Record
-  Record.defrecord(:state, Record.extract(:state, from_lib: "kernel/src/prim_tty.erl"))
+  Record.defrecordp(:state, Record.extract(:state, from_lib: "kernel/src/prim_tty.erl"))
 
   defp from_record(term), do: state(term)
 
+  @doc false
+  @impl true
   def reader(term) do
-    from_record(term)[:reader]
+    {_, ref} = from_record(term)[:reader]
+    {:ok, ref}
   end
 
-  def writer(term) do
+  defp writer(term) do
     from_record(term)[:writer]
   end
 
-  def start(opts \\ %{}) do
+  @doc false
+  @impl true
+  def start(opts \\ []) do
+    opts = Map.new(opts)
     :erlang.unregister(:user_drv_writer)
     :erlang.unregister(:user_drv_reader)
 
@@ -22,9 +36,11 @@ defmodule Termite.Terminal.PrimTTY do
     term = :prim_tty.init(opts)
     :timer.sleep(100)
     Logger.configure(level: old_level)
-    term
+    {:ok, term}
   end
 
+  @doc false
+  @impl true
   def write(term, str) do
     term = state(term, xn: false)
     {output, term} = :prim_tty.handle_request(term, {:putc, str})
@@ -35,16 +51,6 @@ defmodule Termite.Terminal.PrimTTY do
       {^ref, :ok} -> nil
     end
 
-    term
-  end
-
-  def loop(term, timeout) do
-    {_pid, ref} = reader(term)
-
-    receive do
-      {^ref, message} -> message
-    after
-      timeout -> :timeout
-    end
+    {:ok, term}
   end
 end
