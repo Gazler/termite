@@ -49,7 +49,7 @@ defmodule Termite.Screen do
     escape_code() <> seq(command, args)
   end
 
-  def escape_osc_sequence(command, args \\ []) do
+  def osc_escape_sequence(command, args \\ []) do
     "\e]" <> osc_seq(command, args)
   end
 
@@ -155,7 +155,7 @@ defmodule Termite.Screen do
   Alters the terminal tab or window title. OSC Compatible terminals only.
   """
   def title(term, title) do
-    write(term, escape_osc_sequence(:title, [title]))
+    write(term, osc_escape_sequence(:title, [title]))
   end
 
   @doc """
@@ -169,23 +169,23 @@ defmodule Termite.Screen do
   progress - Percentage of progress (0-100)
   """
   def progress(term, :clear) do
-    write(term, escape_osc_sequence(:progress, [0, 0]))
+    write(term, osc_escape_sequence(:progress, [0, 0]))
   end
 
   def progress(term, :info, progress) do
-    write(term, escape_osc_sequence(:progress, [1, progress]))
+    write(term, osc_escape_sequence(:progress, [1, progress]))
   end
 
   def progress(term, :error, progress) do
-    write(term, escape_osc_sequence(:progress, [2, progress]))
+    write(term, osc_escape_sequence(:progress, [2, progress]))
   end
 
   def progress(term, :intermediate, progress) do
-    write(term, escape_osc_sequence(:progress, [3, progress]))
+    write(term, osc_escape_sequence(:progress, [3, progress]))
   end
 
   def progress(term, :paused, progress) do
-    write(term, escape_osc_sequence(:progress, [4, progress]))
+    write(term, osc_escape_sequence(:progress, [4, progress]))
   end
 
   defdelegate write(term, str), to: Termite.Terminal
