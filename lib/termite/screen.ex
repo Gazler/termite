@@ -159,14 +159,14 @@ defmodule Termite.Screen do
   end
 
   @doc """
-    Support for OSC Progress Bars https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC
-    :clear - Clear the progress bar
-    :info - Information state (blue)
-    :error - Error state (red)
-    :intermediate - Intermediate state (yellow)
-    :paused - Paused state (orange)
+  Support for OSC Progress Bars https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC
+  `:clear` - Clear the progress bar
+  `:info` - Information state (blue)
+  `:error` - Error state (red)
+  `:intermediate` - Intermediate state (yellow)
+  `:paused` - Paused state (orange)
 
-    progress - Percentage of progress (0-100)
+  progress - Percentage of progress (0-100)
   """
   def progress(term, :clear) do
     write(term, escape_osc_sequence(:progress, [0, 0]))
