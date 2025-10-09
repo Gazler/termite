@@ -22,6 +22,9 @@ defmodule Termite.Screen do
   defp seq(:cursor_show, []), do: "?25h"
   defp seq(:cursor_hide, []), do: "?25l"
 
+  defp osc_seq(:title, [title]), do: "0;#{title}"
+  defp osc_seq(:progress, [state, percent]), do: "9;4;#{state};#{percent}"
+
   @doc """
   Return the escape code for the terminal.
 
@@ -44,6 +47,10 @@ defmodule Termite.Screen do
   """
   def escape_sequence(command, args \\ []) do
     escape_code() <> seq(command, args)
+  end
+
+  def osc_escape_sequence(command, args \\ []) do
+    "\e]" <> osc_seq(command, args)
   end
 
   @doc """
@@ -142,6 +149,43 @@ defmodule Termite.Screen do
   """
   def exit_alt_screen(term) do
     run_escape_sequence(term, :screen_alt_exit, [])
+  end
+
+  @doc """
+  Alters the terminal tab or window title. OSC Compatible terminals only.
+  """
+  def title(term, title) do
+    write(term, osc_escape_sequence(:title, [title]))
+  end
+
+  @doc """
+  Support for OSC Progress Bars https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC
+  `:clear` - Clear the progress bar
+  `:info` - Information state (blue)
+  `:error` - Error state (red)
+  `:intermediate` - Intermediate state (yellow)
+  `:paused` - Paused state (orange)
+
+  progress - Percentage of progress (0-100)
+  """
+  def progress(term, :clear) do
+    write(term, osc_escape_sequence(:progress, [0, 0]))
+  end
+
+  def progress(term, :info, progress) do
+    write(term, osc_escape_sequence(:progress, [1, progress]))
+  end
+
+  def progress(term, :error, progress) do
+    write(term, osc_escape_sequence(:progress, [2, progress]))
+  end
+
+  def progress(term, :intermediate, progress) do
+    write(term, osc_escape_sequence(:progress, [3, progress]))
+  end
+
+  def progress(term, :paused, progress) do
+    write(term, osc_escape_sequence(:progress, [4, progress]))
   end
 
   defdelegate write(term, str), to: Termite.Terminal

@@ -4,6 +4,8 @@ defmodule Demo do
   def start() do
     Termite.Terminal.start()
     |> Screen.run_escape_sequence(:screen_alt)
+    |> Screen.title("Termite Demo")
+    |> Screen.progress(:paused, 20)
     |> redraw_and_loop()
   end
 
@@ -28,6 +30,7 @@ defmodule Demo do
     state
     |> Screen.run_escape_sequence(:screen_alt_exit)
     |> Screen.run_escape_sequence(:screen_clear)
+    |> Screen.progress(:clear)
   end
 
   defp panel(state, str) do
