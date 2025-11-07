@@ -9,7 +9,36 @@ defmodule Termite.Terminal.PrimTTY do
 
   require Logger
   require Record
-  Record.defrecordp(:state, Record.extract(:state, from_lib: "kernel/src/prim_tty.erl"))
+
+  @otp_release String.to_integer(System.otp_release())
+
+  # We need to get the minor release, and we want to represent it as a 4-tuple
+  # for easy comparison.
+  #
+  @erts_version :erlang.system_info(:version)
+                |> to_string()
+                |> String.split(".")
+                |> Enum.map(&String.to_integer/1)
+                |> then(&(&1 ++ List.duplicate(0, 4 - length(&1))))
+                |> List.to_tuple()
+
+  cond do
+    @otp_release >= 28 ->
+      Record.defrecordp(:state, Record.extract(:state, from: "include/prim_tty_28_0.hrl"))
+
+    @otp_release >= 27 ->
+      Record.defrecordp(:state, Record.extract(:state, from: "include/prim_tty_27_0.hrl"))
+
+    # 26.2.5.3 changed the record
+    @otp_release >= 26 and @erts_version >= {14, 2, 5, 3} ->
+      Record.defrecordp(:state, Record.extract(:state, from: "include/prim_tty_26_2_5_3.hrl"))
+
+    @otp_release >= 26 ->
+      Record.defrecordp(:state, Record.extract(:state, from: "include/prim_tty_26_0.hrl"))
+
+    true ->
+      raise "Unsupported OTP version: #{@otp_release}. Termite requires OTP 26 or later."
+  end
 
   defp from_record(term), do: state(term)
 

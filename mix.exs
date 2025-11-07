@@ -26,7 +26,7 @@ defmodule Termite.MixProject do
 
   defp package() do
     [
-      files: ~w(lib .formatter.exs mix.exs README.md LICENCE.md),
+      files: ~w(include lib .formatter.exs mix.exs README.md LICENCE.md),
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/Gazler/termite"}
     ]
