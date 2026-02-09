@@ -10,11 +10,19 @@ defmodule Termite.Terminal do
   ## Options
 
    * `:adapter` - determines the adapter to use. Defaults to `Termite.Terminal.PrimTTY`
+     on OTP 27 and below, and `Termite.Terminal.Shell` for OTP 28 and above.
 
   All other options are passed directly to the adapter.
   """
   def start(opts \\ []) do
-    {adapter, opts} = Keyword.pop(opts, :adapter, Termite.Terminal.PrimTTY)
+    adapter =
+      if String.to_integer(System.otp_release()) >= 28 do
+        Termite.Terminal.Shell
+      else
+        Termite.Terminal.PrimTTY
+      end
+
+    {adapter, opts} = Keyword.pop(opts, :adapter, adapter)
     {:ok, term} = adapter.start(opts)
     {:ok, ref} = adapter.reader(term)
     resize(%__MODULE__{reader: ref, adapter: {adapter, term}})
