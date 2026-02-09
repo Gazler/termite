@@ -17,7 +17,6 @@ defmodule Termite.Terminal.Shell do
       {:ok, state, {:continue, :poll}}
     end
 
-
     def handle_continue(:poll, %__MODULE__{} = state) do
       case IO.getn("") do
         :eof ->
@@ -149,6 +148,7 @@ defmodule Termite.Terminal.Shell do
 
   @impl Adapter
   def write(%__MODULE__{} = shell, str) do
+    str = str |> String.replace("\r\n", "\n") |> String.replace("\n", "\r\n")
     IO.write(str)
     {:ok, shell}
   end
