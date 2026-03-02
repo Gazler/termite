@@ -76,10 +76,10 @@ See `examples/mouse.exs` for a full example.
 
 - press `q` to quit cleanly (recommended)
 - `Ctrl+C` is handled (`^C`) and restores the terminal in normal raw-input mode
-- `Ctrl+C Ctrl+C` can force BEAM abort (`SIGINT` break path), which can skip cleanup
-- best-effort hard signal cleanup is installed for `SIGTERM`, `SIGHUP`, and `SIGQUIT` (when supported by your runtime)
+- `Ctrl+C Ctrl+C` can force BEAM abort (`SIGINT` break path), which can skip in-VM cleanup
+- best-effort hard signal cleanup is installed for `SIGTERM`, `SIGHUP`, and `SIGQUIT`
+- if you need external exit trapping, run `./examples/mouse.sh` (shell trap + tty restore)
 - `SIGKILL` cannot be trapped and cannot run cleanup
-- to avoid BEAM Ctrl+C break-abort behavior entirely, run examples with `ELIXIR_ERL_OPTIONS="+Bd"`
 - if your terminal is left dirty after a hard abort, run:
   - `mix run -e 'Termite.Screen.emergency_restore()'`
   - and if needed: `stty sane`

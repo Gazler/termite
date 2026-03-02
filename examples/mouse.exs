@@ -28,15 +28,13 @@ defmodule Mouse do
   end
 
   defp install_hard_signal_cleanup() do
-    if function_exported?(System, :trap_signal, 2) do
-      Enum.each(@hard_signals, fn signal ->
-        _ =
-          System.trap_signal(signal, fn ->
-            IO.write(Screen.restore_sequence())
-            System.stop(0)
-          end)
-      end)
-    end
+    Enum.each(@hard_signals, fn signal ->
+      _ =
+        System.trap_signal(signal, fn ->
+          IO.write(Screen.restore_sequence())
+          System.stop(0)
+        end)
+    end)
   end
 
   defp redraw(term, message) do
