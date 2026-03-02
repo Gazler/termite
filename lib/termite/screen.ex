@@ -22,6 +22,15 @@ defmodule Termite.Screen do
   defp seq(:cursor_show, []), do: "?25h"
   defp seq(:cursor_hide, []), do: "?25l"
 
+  defp seq(:mouse_click_enable, []), do: "?1000h"
+  defp seq(:mouse_click_disable, []), do: "?1000l"
+  defp seq(:mouse_drag_enable, []), do: "?1002h"
+  defp seq(:mouse_drag_disable, []), do: "?1002l"
+  defp seq(:mouse_motion_enable, []), do: "?1003h"
+  defp seq(:mouse_motion_disable, []), do: "?1003l"
+  defp seq(:mouse_sgr_enable, []), do: "?1006h"
+  defp seq(:mouse_sgr_disable, []), do: "?1006l"
+
   defp osc_seq(:title, [title]), do: "0;#{title}"
   defp osc_seq(:progress, [state, percent]), do: "9;4;#{state};#{percent}"
 
@@ -149,6 +158,85 @@ defmodule Termite.Screen do
   """
   def exit_alt_screen(term) do
     run_escape_sequence(term, :screen_alt_exit, [])
+  end
+
+  @doc """
+  Enable mouse tracking.
+
+  ## Options
+
+    * `:mode` - one of `:click` (default), `:drag`, or `:motion`
+
+  `:click` reports clicks/releases and scroll wheel events.
+  `:drag` also reports movement while a button is held.
+  `:motion` reports all movement.
+
+  SGR mouse mode (`1006`) is enabled automatically.
+  """
+  def enable_mouse(term, opts \\ []) do
+    mode = Keyword.get(opts, :mode, :click)
+
+    term =
+      case mode do
+        :click ->
+          run_escape_sequence(term, :mouse_click_enable, [])
+
+        :drag ->
+          term
+          |> run_escape_sequence(:mouse_click_enable, [])
+          |> run_escape_sequence(:mouse_drag_enable, [])
+
+        :motion ->
+          term
+          |> run_escape_sequence(:mouse_click_enable, [])
+          |> run_escape_sequence(:mouse_motion_enable, [])
+
+        mode ->
+          raise ArgumentError,
+                "invalid mouse mode #{inspect(mode)}. Expected :click, :drag or :motion"
+      end
+
+    run_escape_sequence(term, :mouse_sgr_enable, [])
+  end
+
+  @doc """
+  Disable mouse tracking and SGR mouse mode.
+  """
+  def disable_mouse(term) do
+    term
+    |> run_escape_sequence(:mouse_motion_disable, [])
+    |> run_escape_sequence(:mouse_drag_disable, [])
+    |> run_escape_sequence(:mouse_click_disable, [])
+    |> run_escape_sequence(:mouse_sgr_disable, [])
+  end
+
+  @doc """
+  Return a best-effort terminal restore sequence.
+
+  The sequence disables mouse tracking modes, shows the cursor,
+  resets ANSI styles, and exits the alt screen.
+  """
+  def restore_sequence() do
+    [
+      escape_sequence(:mouse_motion_disable),
+      escape_sequence(:mouse_drag_disable),
+      escape_sequence(:mouse_click_disable),
+      escape_sequence(:mouse_sgr_disable),
+      escape_sequence(:cursor_show),
+      IO.ANSI.reset(),
+      escape_sequence(:screen_alt_exit)
+    ]
+    |> IO.iodata_to_binary()
+  end
+
+  @doc """
+  Write `restore_sequence/0` directly to stdout.
+
+  Useful for emergency cleanup when terminal state is unavailable.
+  """
+  def emergency_restore() do
+    IO.write(restore_sequence())
+    :ok
   end
 
   @doc """

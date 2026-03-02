@@ -12,6 +12,7 @@ A dependency-free NIF-free terminal library for Elixir.
  * support for ANSI and ANSI-256 styles
  * support for alt screen
  * support for keyboard events
+ * support for mouse events (click, scroll, position)
 
 ## Installation
 
@@ -54,6 +55,34 @@ Termite.Terminal.start()
   |> Termite.Screen.exit_alt_screen()
 
 ```
+
+Mouse events:
+
+```elixir
+term =
+  Termite.Terminal.start()
+  |> Termite.Screen.enable_mouse(mode: :click)
+
+case Termite.Terminal.poll_event(term) do
+  {:mouse, %{action: :scroll, button: :wheel_up, x: x, y: y}} ->
+    IO.puts("scroll up at #{x},#{y}")
+
+  {:mouse, %{action: :press, button: :left, x: x, y: y}} ->
+    IO.puts("left click at #{x},#{y}")
+end
+```
+
+See `examples/mouse.exs` for a full example.
+
+- press `q` to quit cleanly (recommended)
+- `Ctrl+C` is handled (`^C`) and restores the terminal in normal raw-input mode
+- `Ctrl+C Ctrl+C` can force BEAM abort (`SIGINT` break path), which can skip cleanup
+- best-effort hard signal cleanup is installed for `SIGTERM`, `SIGHUP`, and `SIGQUIT` (when supported by your runtime)
+- `SIGKILL` cannot be trapped and cannot run cleanup
+- to avoid BEAM Ctrl+C break-abort behavior entirely, run examples with `ELIXIR_ERL_OPTIONS="+Bd"`
+- if your terminal is left dirty after a hard abort, run:
+  - `mix run -e 'Termite.Screen.emergency_restore()'`
+  - and if needed: `stty sane`
 
    terminal
 

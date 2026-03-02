@@ -92,32 +92,79 @@ defmodule Termite.Terminal.Shell do
       {:reply, state.ref, state}
     end
 
+    @escape_timeout 50
+
     def handle_info(:timeout, %__MODULE__{buffer: nil} = state) do
       {:noreply, state}
     end
 
-    def handle_info(:timeout, %__MODULE__{} = state) do
-      send(state.parent, {state.ref, {:data, state.buffer}})
+    def handle_info(:timeout, %__MODULE__{buffer: buffer} = state) do
+      send(state.parent, {state.ref, {:data, buffer}})
       {:noreply, %{state | buffer: nil}}
     end
 
-    def handle_info({:data, "\e"}, %__MODULE__{buffer: nil} = state) do
-      {:noreply, %{state | buffer: "\e"}, 50}
+    def handle_info({:data, data}, %__MODULE__{} = state) when is_binary(data) do
+      {state, messages} = buffer_input(state, data)
+
+      Enum.each(messages, fn message ->
+        send(state.parent, {state.ref, {:data, message}})
+      end)
+
+      if state.buffer == nil do
+        {:noreply, state}
+      else
+        {:noreply, state, @escape_timeout}
+      end
     end
 
-    def handle_info({:data, "["}, %__MODULE__{buffer: "\e"} = state) do
-      {:noreply, %{state | buffer: "\e["}, 50}
+    def handle_info({:data, data}, %__MODULE__{} = state) do
+      send(state.parent, {state.ref, {:data, to_string(data)}})
+      {:noreply, state}
     end
 
-    def handle_info({:data, data}, %__MODULE__{buffer: "\e["} = state) do
-      send(state.parent, {state.ref, {:data, "\e[" <> data}})
-      {:noreply, %{state | buffer: nil}}
+    defp buffer_input(state, data) do
+      Enum.reduce(String.graphemes(data), {state, []}, fn char, {state, messages} ->
+        case buffer_char(state, char) do
+          {state, nil} -> {state, messages}
+          {state, message} -> {state, messages ++ [message]}
+        end
+      end)
     end
 
-    def handle_info({:data, data}, %__MODULE__{buffer: nil} = state) do
-      send(state.parent, {state.ref, {:data, data}})
-      {:noreply, %{state | buffer: nil}}
+    defp buffer_char(%__MODULE__{buffer: nil} = state, "\e") do
+      {%{state | buffer: "\e"}, nil}
     end
+
+    defp buffer_char(%__MODULE__{buffer: nil} = state, char) do
+      {state, char}
+    end
+
+    defp buffer_char(%__MODULE__{buffer: buffer} = state, char) do
+      buffer = buffer <> char
+
+      if complete_escape_sequence?(buffer) do
+        {%{state | buffer: nil}, buffer}
+      else
+        {%{state | buffer: buffer}, nil}
+      end
+    end
+
+    defp complete_escape_sequence?("\e"), do: false
+    defp complete_escape_sequence?("\e["), do: false
+    defp complete_escape_sequence?("\eO"), do: false
+
+    defp complete_escape_sequence?(<<"\e[", _::binary>> = seq) do
+      csi_final_byte?(:binary.last(seq))
+    end
+
+    defp complete_escape_sequence?(<<"\e]", _::binary>> = seq) do
+      String.ends_with?(seq, "\a") or String.ends_with?(seq, "\e\\")
+    end
+
+    defp complete_escape_sequence?(<<"\e", _::binary>>), do: true
+
+    defp csi_final_byte?(byte) when byte >= ?@ and byte <= ?~, do: true
+    defp csi_final_byte?(_), do: false
   end
 
   defstruct [:pid, :ref]

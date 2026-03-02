@@ -59,4 +59,15 @@ defmodule Termite.Terminal do
       timeout -> :timeout
     end
   end
+
+  @doc """
+  Wait for input and parse known events.
+
+  This is equivalent to `poll/2 |> Termite.Input.parse/1`.
+  """
+  def poll_event(state, timeout \\ :infinity) do
+    state
+    |> poll(timeout)
+    |> Termite.Input.parse()
+  end
 end
