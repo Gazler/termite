@@ -92,6 +92,8 @@ defmodule Termite.Terminal.Shell do
       {:reply, state.ref, state}
     end
 
+    @escape_timeout 2
+
     def handle_info(:timeout, %__MODULE__{buffer: nil} = state) do
       {:noreply, state}
     end
@@ -102,22 +104,44 @@ defmodule Termite.Terminal.Shell do
     end
 
     def handle_info({:data, "\e"}, %__MODULE__{buffer: nil} = state) do
-      {:noreply, %{state | buffer: "\e"}, 50}
+      {:noreply, %{state | buffer: "\e"}, @escape_timeout}
     end
 
     def handle_info({:data, "["}, %__MODULE__{buffer: "\e"} = state) do
-      {:noreply, %{state | buffer: "\e["}, 50}
+      {:noreply, %{state | buffer: "\e["}, @escape_timeout}
     end
 
-    def handle_info({:data, data}, %__MODULE__{buffer: "\e["} = state) do
-      send(state.parent, {state.ref, {:data, "\e[" <> data}})
+    def handle_info({:data, data}, %__MODULE__{buffer: "\e"} = state) do
+      send(state.parent, {state.ref, {:data, "\e"}})
+      send(state.parent, {state.ref, {:data, data}})
       {:noreply, %{state | buffer: nil}}
+    end
+
+    def handle_info({:data, data}, %__MODULE__{buffer: buffer} = state)
+        when is_binary(buffer) and buffer != "\e" do
+      new_buffer = buffer <> data
+
+      if complete_escape_sequence?(new_buffer) do
+        send(state.parent, {state.ref, {:data, new_buffer}})
+        {:noreply, %{state | buffer: nil}}
+      else
+        {:noreply, %{state | buffer: new_buffer}, @escape_timeout}
+      end
     end
 
     def handle_info({:data, data}, %__MODULE__{buffer: nil} = state) do
       send(state.parent, {state.ref, {:data, data}})
-      {:noreply, %{state | buffer: nil}}
+      {:noreply, state}
     end
+
+    defp complete_escape_sequence?("\e[" <> rest) when rest != "" do
+      csi_final_byte?(String.last(rest))
+    end
+
+    defp complete_escape_sequence?(_), do: false
+
+    defp csi_final_byte?(<<byte>>) when byte >= ?@ and byte <= ?~, do: true
+    defp csi_final_byte?(_), do: false
   end
 
   defstruct [:pid, :ref]
