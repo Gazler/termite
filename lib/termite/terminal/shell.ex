@@ -115,6 +115,10 @@ defmodule Termite.Terminal.Shell do
       {:noreply, %{state | buffer: "\e["}, @escape_timeout}
     end
 
+    def handle_info({:data, "O"}, %__MODULE__{buffer: "\e"} = state) do
+      {:noreply, %{state | buffer: "\eO"}, @escape_timeout}
+    end
+
     def handle_info({:data, data}, %__MODULE__{buffer: "\e"} = state) do
       send(state.parent, {state.ref, {:data, "\e"}})
       send(state.parent, {state.ref, {:data, data}})
@@ -142,10 +146,17 @@ defmodule Termite.Terminal.Shell do
       csi_final_byte?(String.last(rest))
     end
 
+    defp complete_escape_sequence?("\eO" <> rest) when rest != "" do
+      ss3_final_byte?(String.last(rest))
+    end
+
     defp complete_escape_sequence?(_), do: false
 
     defp csi_final_byte?(<<byte>>) when byte >= ?@ and byte <= ?~, do: true
     defp csi_final_byte?(_), do: false
+
+    defp ss3_final_byte?(<<byte>>) when byte >= ?@ and byte <= ?~, do: true
+    defp ss3_final_byte?(_), do: false
   end
 
   defstruct [:pid, :ref]
