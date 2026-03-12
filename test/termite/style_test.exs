@@ -76,5 +76,22 @@ defmodule Termite.StyleTest do
         |> Termite.Style.render_to_string("hello world")
       end)
     end
+
+    test "hex colors are rendered as truecolor escape sequences" do
+      string =
+        Termite.Style.foreground("#268bd2")
+        |> Termite.Style.background("#002b36")
+        |> Termite.Style.render_to_string("hello world")
+
+      assert string == "\e[48;2;0;43;54;38;2;38;139;210mhello world\e[0m"
+    end
+
+    test "rgb tuples are rendered as truecolor escape sequences" do
+      string =
+        Termite.Style.foreground({38, 139, 210})
+        |> Termite.Style.render_to_string("hello world")
+
+      assert string == "\e[38;2;38;139;210mhello world\e[0m"
+    end
   end
 end
