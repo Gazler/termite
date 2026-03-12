@@ -50,6 +50,10 @@ defmodule Termite.Terminal.Shell do
       {:ok, state}
     end
 
+    def handle_event(_signal, %__MODULE__{} = state) do
+      {:ok, state}
+    end
+
     def handle_info(_, %__MODULE__{} = state) do
       {:ok, state}
     end

@@ -44,7 +44,7 @@ defmodule Termite.Terminal do
   """
   def resize(state) do
     %{adapter: {adapter, term}} = state
-    %{state | size: adapter.resize(term)}
+    %{state | size: safe_resize(adapter, term, state.size)}
   end
 
   @doc """
@@ -58,5 +58,18 @@ defmodule Termite.Terminal do
     after
       timeout -> :timeout
     end
+  end
+
+  defp safe_resize(adapter, term, fallback) do
+    case adapter.resize(term) do
+      %{width: width, height: height} when is_integer(width) and is_integer(height) ->
+        %{width: width, height: height}
+
+      {:error, _reason} ->
+        fallback || %{width: 80, height: 24}
+    end
+  rescue
+    MatchError ->
+      fallback || %{width: 80, height: 24}
   end
 end
