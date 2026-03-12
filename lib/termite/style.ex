@@ -28,17 +28,38 @@ defmodule Termite.Style do
   defp seq({:background, color}, style), do: color(style, color, :background)
   defp seq({:foreground, color}, style), do: color(style, color, :foreground)
 
-  defp color(%Style{type: :ansi}, color, type) when color < 16 do
+  defp color(%Style{type: :ansi}, color, type) when is_integer(color) and color < 16 do
     color = color + if color < 8, do: 30, else: 82
     color + if type == :background, do: 10, else: 0
   end
 
-  defp color(%Style{type: :ansi256}, color, :background) do
+  defp color(%Style{type: :ansi256}, color, :background) when is_integer(color) do
     "48;5;#{color}"
   end
 
-  defp color(%Style{type: :ansi256}, color, :foreground) do
+  defp color(%Style{type: :ansi256}, color, :foreground) when is_integer(color) do
     "38;5;#{color}"
+  end
+
+  defp color(_style, {red, green, blue}, :background)
+       when red in 0..255 and green in 0..255 and blue in 0..255 do
+    "48;2;#{red};#{green};#{blue}"
+  end
+
+  defp color(_style, {red, green, blue}, :foreground)
+       when red in 0..255 and green in 0..255 and blue in 0..255 do
+    "38;2;#{red};#{green};#{blue}"
+  end
+
+  defp color(style, "#" <> hex, type) do
+    color(style, parse_hex_color!(hex), type)
+  end
+
+  defp color(style, color, type) when is_binary(color) do
+    case String.trim(color) do
+      "#" <> _ = hex -> color(style, hex, type)
+      other -> raise ArgumentError, "unsupported color #{inspect(other)}"
+    end
   end
 
   @doc """
@@ -163,5 +184,24 @@ defmodule Termite.Style do
 
     Termite.Screen.escape_code() <>
       seq <> "m" <> str <> reset_code()
+  end
+
+  defp parse_hex_color!(<<_::binary-size(6)>> = hex) do
+    List.to_tuple(for <<pair::binary-size(2) <- hex>>, do: hex_byte!(pair))
+  end
+
+  defp parse_hex_color!(<<r, g, b>>) do
+    parse_hex_color!(<<r, r, g, g, b, b>>)
+  end
+
+  defp parse_hex_color!(other) do
+    raise ArgumentError, "expected a #RGB or #RRGGBB color, got: ##{other}"
+  end
+
+  defp hex_byte!(pair) do
+    case Integer.parse(pair, 16) do
+      {value, ""} -> value
+      _ -> raise ArgumentError, "invalid hex color component: #{inspect(pair)}"
+    end
   end
 end
