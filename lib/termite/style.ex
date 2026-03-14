@@ -140,6 +140,25 @@ defmodule Termite.Style do
   end
 
   @doc """
+  Output the opening ANSI code for a style without appending a reset.
+  """
+  def open_code(style \\ %Style{})
+
+  def open_code(%Style{styles: []}) do
+    ""
+  end
+
+  def open_code(style = %Style{}) do
+    seq =
+      style.styles
+      |> Enum.sort()
+      |> Enum.map(&seq(&1, style))
+      |> Enum.join(";")
+
+    Termite.Screen.escape_code() <> seq <> "m"
+  end
+
+  @doc """
   Render a string with the specified styles. And a reset code.
 
   ```elixir
@@ -155,13 +174,6 @@ defmodule Termite.Style do
   end
 
   def render_to_string(style = %Style{}, str) do
-    seq =
-      style.styles
-      |> Enum.sort()
-      |> Enum.map(&seq(&1, style))
-      |> Enum.join(";")
-
-    Termite.Screen.escape_code() <>
-      seq <> "m" <> str <> reset_code()
+    open_code(style) <> str <> reset_code()
   end
 end

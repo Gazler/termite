@@ -28,6 +28,16 @@ defmodule Termite.StyleTest do
 
       assert string == "hello world"
     end
+
+    test "open_code renders the prefix without a reset" do
+      code =
+        Termite.Style.ansi256()
+        |> Termite.Style.foreground(0)
+        |> Termite.Style.background(11)
+        |> Termite.Style.open_code()
+
+      assert code == "\e[48;5;11;38;5;0m"
+    end
   end
 
   describe "colors" do
