@@ -115,6 +115,10 @@ defmodule Termite.Terminal.Shell do
       {:noreply, %{state | buffer: "\e["}, @escape_timeout}
     end
 
+    def handle_info({:data, "]"}, %__MODULE__{buffer: "\e"} = state) do
+      {:noreply, %{state | buffer: "\e]"}, @escape_timeout}
+    end
+
     def handle_info({:data, "O"}, %__MODULE__{buffer: "\e"} = state) do
       {:noreply, %{state | buffer: "\eO"}, @escape_timeout}
     end
@@ -146,6 +150,10 @@ defmodule Termite.Terminal.Shell do
       csi_final_byte?(String.last(rest))
     end
 
+    defp complete_escape_sequence?("\e]" <> rest) when rest != "" do
+      osc_terminated?(rest)
+    end
+
     defp complete_escape_sequence?("\eO" <> rest) when rest != "" do
       ss3_final_byte?(String.last(rest))
     end
@@ -154,6 +162,10 @@ defmodule Termite.Terminal.Shell do
 
     defp csi_final_byte?(<<byte>>) when byte >= ?@ and byte <= ?~, do: true
     defp csi_final_byte?(_), do: false
+
+    defp osc_terminated?(rest) do
+      String.ends_with?(rest, "\a") or String.ends_with?(rest, "\e\\")
+    end
 
     defp ss3_final_byte?(<<byte>>) when byte >= ?@ and byte <= ?~, do: true
     defp ss3_final_byte?(_), do: false

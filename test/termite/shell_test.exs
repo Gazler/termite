@@ -17,4 +17,28 @@ defmodule Termite.Terminal.ShellTest do
 
     assert_received {^ref, {:data, "\eOP"}}
   end
+
+  test "buffers OSC sequences until BEL terminator" do
+    ref = make_ref()
+    state = %Server{parent: self(), ref: ref, buffer: nil}
+
+    assert {:noreply, %{buffer: "\e"}, 2} = Server.handle_info({:data, "\e"}, state)
+
+    assert {:noreply, %{buffer: "\e]"}, 2} =
+             Server.handle_info({:data, "]"}, %{state | buffer: "\e"})
+
+    assert {:noreply, %{buffer: "\e]10;rgb:8383/9494/9696"}, 2} =
+             Server.handle_info(
+               {:data, "10;rgb:8383/9494/9696"},
+               %{state | buffer: "\e]"}
+             )
+
+    assert {:noreply, %{buffer: nil}} =
+             Server.handle_info(
+               {:data, "\a"},
+               %{state | buffer: "\e]10;rgb:8383/9494/9696"}
+             )
+
+    assert_received {^ref, {:data, "\e]10;rgb:8383/9494/9696\a"}}
+  end
 end
