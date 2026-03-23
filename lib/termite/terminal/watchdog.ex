@@ -130,6 +130,11 @@ defmodule Termite.Terminal.Watchdog do
   defp os_pid do
     :os.getpid()
     |> List.to_string()
+    |> normalize_pid()
+    |> case do
+      nil -> command_parent_pid()
+      pid -> pid
+    end
   end
 
   defp maybe_log(nil, _message), do: :ok
@@ -143,5 +148,25 @@ defmodule Termite.Terminal.Watchdog do
 
   defp unix? do
     match?({:unix, _}, :os.type())
+  end
+
+  defp command_parent_pid do
+    case System.cmd("/bin/sh", ["-c", "printf '%s' \"$PPID\""], stderr_to_stdout: true) do
+      {output, 0} ->
+        normalize_pid(String.trim(output))
+
+      _other ->
+        nil
+    end
+  rescue
+    _ -> nil
+  end
+
+  defp normalize_pid(pid) when is_binary(pid) do
+    pid = String.trim(pid)
+
+    if pid != "" and String.match?(pid, ~r/^\d+$/) do
+      pid
+    end
   end
 end
