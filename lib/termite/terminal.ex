@@ -2,7 +2,7 @@ defmodule Termite.Terminal do
   @moduledoc """
   This module provides an interface for interacting with the terminal specified.
   """
-  defstruct [:adapter, :reader, :size]
+  defstruct [:adapter, :reader, :size, :watchdog]
 
   @doc """
   Start the terminal.
@@ -11,6 +11,8 @@ defmodule Termite.Terminal do
 
    * `:adapter` - determines the adapter to use. Defaults to `Termite.Terminal.PrimTTY`
      on OTP 27 and below, and `Termite.Terminal.Shell` for OTP 28 and above.
+   * `:watchdog` - on Unix, start an external helper that can restore terminal
+     state if the BEAM exits before normal cleanup. Defaults to `false`
 
   All other options are passed directly to the adapter.
   """
@@ -22,10 +24,26 @@ defmodule Termite.Terminal do
         Termite.Terminal.PrimTTY
       end
 
+    {watchdog?, opts} = Keyword.pop(opts, :watchdog, false)
+    {watchdog_script, opts} = Keyword.pop(opts, :watchdog_script)
+    {watchdog_tty, opts} = Keyword.pop(opts, :watchdog_tty)
+    {watchdog_args, opts} = Keyword.pop(opts, :watchdog_args, [])
+    {watchdog_log, opts} = Keyword.pop(opts, :watchdog_log)
     {adapter, opts} = Keyword.pop(opts, :adapter, adapter)
     {:ok, term} = adapter.start(opts)
     {:ok, ref} = adapter.reader(term)
-    resize(%__MODULE__{reader: ref, adapter: {adapter, term}})
+
+    watchdog =
+      if watchdog? do
+        Termite.Terminal.Watchdog.start(
+          script: watchdog_script,
+          tty_path: watchdog_tty,
+          extra_args: watchdog_args,
+          log_path: watchdog_log
+        )
+      end
+
+    resize(%__MODULE__{reader: ref, adapter: {adapter, term}, watchdog: watchdog})
   end
 
   @doc """
@@ -58,6 +76,14 @@ defmodule Termite.Terminal do
     after
       timeout -> :timeout
     end
+  end
+
+  @doc """
+  Disarm any active watchdog after normal shutdown.
+  """
+  def close(%__MODULE__{watchdog: watchdog} = state) do
+    Termite.Terminal.Watchdog.disarm(watchdog)
+    %{state | watchdog: nil}
   end
 
   defp safe_resize(adapter, term, fallback) do
