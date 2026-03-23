@@ -80,7 +80,7 @@ defmodule Termite.Terminal.Watchdog do
   end
 
   defp tty_path(nil) do
-    fd_tty_path(1) || fd_tty_path(0) || "/dev/tty"
+    fd_tty_path(1) || fd_tty_path(0) || command_tty_path(1) || command_tty_path(0) || "/dev/tty"
   end
 
   defp tty_path(path), do: path
@@ -99,6 +99,26 @@ defmodule Termite.Terminal.Watchdog do
     end
   rescue
     _ -> nil
+  end
+
+  defp command_tty_path(fd) when fd in [0, 1] do
+    case System.cmd("/bin/sh", ["-c", "tty <&#{fd}"], stderr_to_stdout: true) do
+      {output, 0} ->
+        output
+        |> String.trim()
+        |> normalize_tty_path()
+
+      _other ->
+        nil
+    end
+  rescue
+    _ -> nil
+  end
+
+  defp normalize_tty_path(path) do
+    if String.starts_with?(path, "/dev/") do
+      path
+    end
   end
 
   defp disarm_path do
