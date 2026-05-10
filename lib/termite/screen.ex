@@ -211,6 +211,23 @@ defmodule Termite.Screen do
   end
 
   @doc """
+  Enable enhanced keyboard reporting.
+
+  This currently enables Kitty keyboard protocol basic disambiguation and xterm
+  `modifyOtherKeys` mode 2.
+  """
+  def enable_enhanced_keyboard(term) do
+    write(term, "\e[>1u\e[>4;2m")
+  end
+
+  @doc """
+  Disable enhanced keyboard reporting.
+  """
+  def disable_enhanced_keyboard(term) do
+    write(term, "\e[<u\e[>4;0m")
+  end
+
+  @doc """
   Alters the terminal tab or window title. OSC Compatible terminals only.
   """
   def title(term, title) do
