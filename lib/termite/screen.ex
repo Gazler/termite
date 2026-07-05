@@ -58,7 +58,7 @@ defmodule Termite.Screen do
     escape_code() <> seq(command, args)
   end
 
-  def osc_escape_sequence(command, args \\ []) do
+  def osc_escape_sequence(command, args) do
     "\e]" <> osc_seq(command, args)
   end
 

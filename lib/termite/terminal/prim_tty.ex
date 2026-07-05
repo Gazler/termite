@@ -7,7 +7,6 @@ defmodule Termite.Terminal.PrimTTY do
 
   @behaviour Termite.Terminal.Adapter
 
-  require Logger
   require Record
 
   otp_release = String.to_integer(System.otp_release())
