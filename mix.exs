@@ -15,7 +15,11 @@ defmodule Termite.MixProject do
       name: "Termite",
       source_url: "https://github.com/Gazler/termite",
       docs: [
-        source_ref: "v#{@version}"
+        source_ref: "v#{@version}",
+        extras: [
+          "README.md",
+          "CHANGELOG.md"
+        ]
       ]
     ]
   end
@@ -26,7 +30,7 @@ defmodule Termite.MixProject do
 
   defp package() do
     [
-      files: ~w(include lib .formatter.exs mix.exs README.md LICENCE.md),
+      files: ~w(include lib .formatter.exs mix.exs README.md CHANGELOG.md LICENCE.md),
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/Gazler/termite"}
     ]
