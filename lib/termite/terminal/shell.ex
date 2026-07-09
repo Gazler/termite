@@ -32,64 +32,43 @@ defmodule Termite.Terminal.Shell do
     end
   end
 
-  defmodule Winch do
-    @behaviour :gen_event
-
-    defstruct [:parent, :ref]
-
-    def init(%__MODULE__{} = state) do
-      {:ok, state}
-    end
-
-    def handle_call(_, %__MODULE__{} = state) do
-      {:ok, :ok, state}
-    end
-
-    def handle_event(:sigwinch, %__MODULE__{} = state) do
-      send(state.parent, {state.ref, {:signal, :winch}})
-      {:ok, state}
-    end
-
-    def handle_event(_signal, %__MODULE__{} = state) do
-      {:ok, state}
-    end
-
-    def handle_info(_, %__MODULE__{} = state) do
-      {:ok, state}
-    end
-  end
-
   defmodule Server do
     use GenServer
 
-    defstruct [:buffer, :parent, :reader, :ref]
+    alias Termite.Terminal.Shell.SignalHandler
 
-    def start_link() do
-      GenServer.start_link(__MODULE__, self())
+    defstruct [:buffer, :parent, :reader, :ref, :signal_handler]
+
+    def start_link(opts \\ []) do
+      GenServer.start_link(__MODULE__, {self(), opts})
     end
 
     def ref(pid) do
       GenServer.call(pid, :ref)
     end
 
-    def init(parent) do
+    def init({parent, opts}) do
+      Process.flag(:trap_exit, true)
       :shell.start_interactive({:noshell, :raw})
 
       ref = make_ref()
-
-      :os.set_signal(:sigwinch, :handle)
-      winch = %Winch{parent: parent, ref: ref}
-      :ok = :gen_event.add_handler(:erl_signal_server, Winch, winch)
+      signal_handler = SignalHandler.install(parent, ref, Keyword.get(opts, :signals, [:winch]))
 
       {:ok, reader} = Reader.start_link(self(), ref)
 
       state = %__MODULE__{
         parent: parent,
         reader: reader,
-        ref: ref
+        ref: ref,
+        signal_handler: signal_handler
       }
 
       {:ok, state}
+    end
+
+    def terminate(_reason, %__MODULE__{} = state) do
+      SignalHandler.uninstall(state.signal_handler)
+      :ok
     end
 
     def handle_call(:ref, _from, %__MODULE__{} = state) do
@@ -174,8 +153,8 @@ defmodule Termite.Terminal.Shell do
   defstruct [:pid, :ref]
 
   @impl Adapter
-  def start(_ \\ []) do
-    {:ok, pid} = Server.start_link()
+  def start(opts \\ []) do
+    {:ok, pid} = Server.start_link(opts)
 
     shell = %__MODULE__{
       pid: pid,
