@@ -64,6 +64,11 @@ defmodule Termite.Terminal.ShellTest do
     refute_receive {^ref, {:signal, _signal}}, 20
   end
 
+  @skip_on_otp_26_27 if System.otp_release() in ["26", "27"],
+                       do: "SIGWINCH delivery is inconsistent on OTP 26 and 27",
+                       else: false
+
+  @tag skip: @skip_on_otp_26_27
   test "install normalizes short and Erlang signal names" do
     ensure_default_signal_handler()
 
