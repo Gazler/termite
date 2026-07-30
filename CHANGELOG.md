@@ -1,9 +1,18 @@
+## [0.4.4] - 2026-07-30
+
+### Features
+
+- *(Termite.Screen)* Add sequences for enhanced_keyboard_* ([9e6cac0](https://github.com/gazler/breeze/commit/9e6cac0dfee382228d767c6c920424d4d983e5ad))
 ## [0.4.3] - 2026-07-09
 
 ### Features
 
 - *(screen)* Add enhanced keyboard mode helpers ([4e1c13d](https://github.com/gazler/breeze/commit/4e1c13d389fba0544f2914fd2072f78bcc717a62))
-- *(Termite.Terminal.Shell)* Support configurable signal subscriptions ([245cd26](https://github.com/gazler/breeze/commit/245cd26f8c95a9e0b55267e4d6dc259d0b68214d))
+- *(Termite.Terminal.Shell)* Support configurable signal subscriptions ([32c80e5](https://github.com/gazler/breeze/commit/32c80e5687538362be3d172b58863bb3c51c6e2c))
+
+### Bug Fixes
+
+- Elixir 1.20 type warnings ([c391cac](https://github.com/gazler/breeze/commit/c391cac1b55e463d9ffc00c2c84bfa750483ba1b))
 ## [0.4.2] - 2026-04-17
 
 ### Features
