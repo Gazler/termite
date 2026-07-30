@@ -14,6 +14,9 @@ defmodule Termite.ScreenTest do
   test "enhanced keyboard writes the keyboard reporting sequences" do
     terminal = %Termite.Terminal{adapter: {TestAdapter, self()}}
 
+    assert Screen.escape_sequence(:enhanced_keyboard_enable) == "\e[>1u\e[>4;2m"
+    assert Screen.escape_sequence(:enhanced_keyboard_disable) == "\e[<u\e[>4;0m"
+
     assert %Termite.Terminal{} = Screen.enable_enhanced_keyboard(terminal)
     assert_receive {:terminal_write, "\e[>1u\e[>4;2m"}
 

@@ -31,6 +31,9 @@ defmodule Termite.Screen do
   defp seq(:mouse_sgr_enable, []), do: "?1006h"
   defp seq(:mouse_sgr_disable, []), do: "?1006l"
 
+  defp seq(:enhanced_keyboard_enable, []), do: ">1u\e[>4;2m"
+  defp seq(:enhanced_keyboard_disable, []), do: "<u\e[>4;0m"
+
   defp osc_seq(:title, [title]), do: "0;#{title}"
   defp osc_seq(:progress, [state, percent]), do: "9;4;#{state};#{percent}"
 
@@ -217,14 +220,14 @@ defmodule Termite.Screen do
   `modifyOtherKeys` mode 2.
   """
   def enable_enhanced_keyboard(term) do
-    write(term, "\e[>1u\e[>4;2m")
+    run_escape_sequence(term, :enhanced_keyboard_enable)
   end
 
   @doc """
   Disable enhanced keyboard reporting.
   """
   def disable_enhanced_keyboard(term) do
-    write(term, "\e[<u\e[>4;0m")
+    run_escape_sequence(term, :enhanced_keyboard_disable)
   end
 
   @doc """
