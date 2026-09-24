@@ -9,6 +9,14 @@ defmodule Termite.Terminal.Adapter do
   @callback start(opts :: %{}) :: {:ok, term} | {:error, atom}
 
   @doc """
+  Stop the adapter synchronously and release its resources.
+
+  This callback is optional. Adapters wrapping a shared I/O device should leave
+  that device running.
+  """
+  @callback stop(terminal :: term) :: :ok
+
+  @doc """
   Return a reference for the reader for handling input messages.
   """
   @callback reader(terminal :: term) :: {:ok, reference} | {:error, atom}
@@ -23,4 +31,6 @@ defmodule Termite.Terminal.Adapter do
   Returns a map of the width and height
   """
   @callback resize(terminal :: term) :: %{width: integer(), height: integer()}
+
+  @optional_callbacks [stop: 1]
 end

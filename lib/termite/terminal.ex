@@ -29,6 +29,15 @@ defmodule Termite.Terminal do
   end
 
   @doc """
+  Stop the terminal adapter.
+
+  Returns `:ok` without doing anything if the adapter has no `stop/1` callback.
+  """
+  def stop(%__MODULE__{adapter: {adapter, term}}) do
+    if function_exported?(adapter, :stop, 1), do: adapter.stop(term), else: :ok
+  end
+
+  @doc """
   Write a string to the terminal.
 
   See `Termite.Screen` and `Termite.Style` for documentation on escape codes.
