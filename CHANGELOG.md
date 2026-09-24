@@ -1,3 +1,8 @@
+## [0.4.5] - 2026-09-24
+
+### Features
+
+- *(Termite.Terminal.IODevice)* Add adapter for IODevice ([cde1232](https://github.com/gazler/breeze/commit/cde12327cc16c1d54d4eec32f0f72aa1f4009538))
 ## [0.4.4] - 2026-07-30
 
 ### Features
